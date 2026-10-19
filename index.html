@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Tableau Extension Test</title>
+    <script src="https://cdn.jsdelivr.net/gh/tableau/extensions-api@master/lib/tableau.extensions.1.latest.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 15px; background-color: #f4f6f8; }
+        .card { background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .status { color: #2e7d32; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h3>🎉 Tableau Extension ist aktiv!</h3>
+        <p><strong>Status:</strong> <span id="status">Verbindung wird aufgebaut...</span></p>
+        <p><strong>Dashboard-Name:</strong> <span id="dashboard-name">-</span></p>
+    </div>
+
+    <script>
+        tableau.extensions.initializeAsync().then(function () {
+            document.getElementById('status').textContent = "Erfolgreich verbunden!";
+            document.getElementById('status').className = "status";
+            document.getElementById('dashboard-name').textContent = tableau.extensions.dashboardContent.dashboard.name;
+        }, function (err) {
+            document.getElementById('status').textContent = "Fehler: " + err.message;
+        });
+    </script>
+</body>
+</html>
