@@ -41,6 +41,31 @@
     });
   }
 
+  // Clears every filter on every worksheet in the dashboard.
+  function resetAll() {
+    var dashboard = tableau.extensions.dashboardContent.dashboard;
+    Promise.all(dashboard.worksheets.map(function (ws) {
+      return ws.getFiltersAsync().then(function (filters) {
+        return Promise.all(filters.map(function (f) { return ws.clearFilterAsync(f.fieldName); }));
+      });
+    })).then(render, function (err) {
+      renderMessage('Error resetting filters: ' + describeError(err));
+    });
+  }
+
+  // Clears a single field's filter on every worksheet that uses it.
+  function resetField(fieldName) {
+    var dashboard = tableau.extensions.dashboardContent.dashboard;
+    Promise.all(dashboard.worksheets.map(function (ws) {
+      return ws.getFiltersAsync().then(function (filters) {
+        var hit = filters.some(function (f) { return f.fieldName === fieldName; });
+        return hit ? ws.clearFilterAsync(fieldName) : null;
+      });
+    })).then(render, function (err) {
+      renderMessage('Error resetting ' + fieldName + ': ' + describeError(err));
+    });
+  }
+
   function describe(f, sheetName) {
     var active = false, detail = '';
     if (f.filterType === 'categorical') {
@@ -75,6 +100,12 @@
       : (items.length ? 'No filters active' : 'No filters on this dashboard');
     root.appendChild(banner);
 
+    var reset = el('button', 'reset');
+    reset.textContent = 'Reset all filters';
+    reset.disabled = !activeItems.length;
+    reset.onclick = resetAll;
+    root.appendChild(reset);
+
     items.forEach(function (i) {
       var row = el('div', 'row');
       var dot = el('span', 'dot ' + (i.active ? 'on' : 'off'));
@@ -82,7 +113,11 @@
       var state = el('span', 'state'); state.textContent = i.active ? 'Active' : 'Inactive';
       var det = el('div', 'detail'); det.textContent = i.detail + '  ·  ' + i.sheets.join(', ');
       var top = el('div', 'top');
-      top.appendChild(dot); top.appendChild(name); top.appendChild(state);
+      var btn = el('button', 'reset-one');
+      btn.textContent = 'Reset';
+      btn.disabled = !i.active;
+      btn.onclick = function () { resetField(i.field); };
+      top.appendChild(dot); top.appendChild(name); top.appendChild(state); top.appendChild(btn);
       row.appendChild(top); row.appendChild(det);
       root.appendChild(row);
     });
